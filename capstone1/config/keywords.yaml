@@ -1,0 +1,74 @@
+leaders:
+  - Trump
+  - Biden
+  - Harris
+  - Putin
+  - Lavrov
+  - Medvedev
+  - Lukashenko
+  - Zelensky
+  - Macron
+  - Scholz
+  - Sunak
+  - Orban
+  - Meloni
+  - Netanyahu
+  - Khamenei
+  - Erdogan
+  - "Xi Jinping"
+  - Modi
+  - "Kim Jong Un"
+  - Musk
+  - Soros
+  - Schwab
+
+hotspots:
+  - Ukraine
+  - Gaza
+  - Palestine
+  - Israel
+  - Russia
+  - NATO
+  - Taiwan
+  - Iran
+  - sanctions
+  - nuclear
+  - ceasefire
+  - "war crimes"
+  - genocide
+  - coup
+  - assassination
+
+search_queries:
+  twitter:
+    - "Ukraine war"
+    - "Gaza ceasefire"
+    - "Putin NATO"
+    - "Trump Ukraine"
+    - "Netanyahu Gaza"
+    - "Russia sanctions"
+    - "Taiwan China"
+    - "#Ukraine"
+    - "#Gaza"
+    - "#StopWar"
+  instagram:
+    - "ukraine"
+    - "gaza"
+    - "russia"
+    - "geopolitics"
+    - "war2024"
+    - "nato"
+
+telegram_channels:
+  pro_kremlin:
+    - durov          # test only, use actual channel usernames
+    - rt_russian
+    - solovievlive
+  western:
+    - nexta_tv
+    - ukraineworld
+    - kyivindependent
+  neutral_trackers:
+    - intelrepublic
+    - warmonitor
+    - Middle_East_Spectator

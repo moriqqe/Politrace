@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Python (capstone1)
+capstone1/.venv/
+capstone1/venv/
+capstone1/__pycache__/
+capstone1/**/__pycache__/
+capstone1/*.pyc
+capstone1/**/*.pyc
+
+# Telegram session
+capstone1/telegram_session*
+capstone1/*.session
+
+# Collected data
+capstone1/data/raw/*.csv
+capstone1/data/raw/*.json
+capstone1/data/clean/*.csv
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
