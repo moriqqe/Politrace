@@ -22,6 +22,71 @@ class BaseScraper(ABC):
         self.output_dir = Path(output_dir)
         self.max_records = max_records
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.backup_dir = self.output_dir / "backups"
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+
+    def _checkpoint_csv_path(self, filename_prefix: str) -> Path:
+        return self.backup_dir / f"{filename_prefix}_checkpoint.csv"
+
+    def _checkpoint_meta_path(self, filename_prefix: str) -> Path:
+        return self.backup_dir / f"{filename_prefix}_checkpoint.json"
+
+    def save_checkpoint(
+        self,
+        records: list[dict],
+        filename_prefix: str,
+        completed_queries: list[str],
+        total_queries: int,
+        extra: dict | None = None,
+    ) -> None:
+        """Persist progress after each query so a crash does not lose paid Apify results."""
+        csv_path = self._checkpoint_csv_path(filename_prefix)
+        pd.DataFrame(records).to_csv(csv_path, index=False)
+
+        meta = {
+            "completed_queries": completed_queries,
+            "record_count": len(records),
+            "total_queries": total_queries,
+            "max_records": self.max_records,
+            "updated_at": self.timestamp(),
+        }
+        if extra:
+            meta.update(extra)
+        with self._checkpoint_meta_path(filename_prefix).open("w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2, ensure_ascii=False)
+
+        console.print(
+            f"Checkpoint saved: {len(records):,} records "
+            f"({len(completed_queries)}/{total_queries} queries) → {csv_path}",
+            style="cyan",
+        )
+
+    def load_checkpoint(
+        self, filename_prefix: str
+    ) -> tuple[list[dict], list[str], set[str | int], dict] | None:
+        """Load checkpoint CSV and metadata. Returns None if no checkpoint exists."""
+        csv_path = self._checkpoint_csv_path(filename_prefix)
+        meta_path = self._checkpoint_meta_path(filename_prefix)
+        if not csv_path.exists() or not meta_path.exists():
+            return None
+
+        try:
+            df = pd.read_csv(csv_path)
+        except pd.errors.EmptyDataError:
+            return None
+        records = df.to_dict(orient="records") if not df.empty else []
+
+        with meta_path.open(encoding="utf-8") as f:
+            meta = json.load(f)
+
+        seen_ids: set[str | int] = set()
+        for record in records:
+            record_id = self._record_id(record)
+            if record_id is not None:
+                seen_ids.add(record_id)
+
+        completed = meta.get("completed_queries", [])
+        return records, completed, seen_ids, meta
 
     @abstractmethod
     def scrape(self, query: str, **kwargs) -> list[dict]:
@@ -58,23 +123,45 @@ class BaseScraper(ABC):
         queries: list[str],
         filename_prefix: str,
         limit_key: str | None = None,
+        resume: bool = False,
         **kwargs,
     ) -> str:
         """Scrape all queries, dedupe by id, save aggregated results. Returns output path."""
         all_records: list[dict] = []
-        seen_ids: set = set()
+        seen_ids: set[str | int] = set()
+        completed_queries: list[str] = []
+        total_queries = len(queries)
+        pending_queries = list(queries)
+
+        if resume:
+            checkpoint = self.load_checkpoint(filename_prefix)
+            if checkpoint:
+                all_records, completed_queries, seen_ids, _meta = checkpoint
+                done = set(completed_queries)
+                pending_queries = [q for q in queries if q not in done]
+                console.print(
+                    f"Resuming from checkpoint: {len(all_records):,} records, "
+                    f"{len(completed_queries)}/{total_queries} queries already done",
+                    style="cyan",
+                )
+                if not pending_queries:
+                    console.print("All queries already completed.", style="yellow")
+                    if all_records:
+                        return self.save(all_records, filename_prefix)
+                    return str(self._checkpoint_csv_path(filename_prefix).resolve())
 
         with make_task_progress("Scraping queries") as progress:
             task = progress.add_task(
                 f"Queries (target {self.max_records:,} records)",
-                total=len(queries),
+                total=total_queries,
+                completed=len(completed_queries),
             )
-            for index, query in enumerate(queries):
+            for index, query in enumerate(pending_queries):
                 remaining = self.max_records - len(all_records)
                 if remaining <= 0:
                     break
 
-                queries_left = len(queries) - index
+                queries_left = len(pending_queries) - index
                 per_query = max(1, min(remaining, remaining // queries_left))
                 batch_kwargs = dict(kwargs)
                 if limit_key:
@@ -83,7 +170,7 @@ class BaseScraper(ABC):
                 progress.update(
                     task,
                     description=(
-                        f"Query {index + 1}/{len(queries)}: {query!r} "
+                        f"Query {len(completed_queries) + 1}/{total_queries}: {query!r} "
                         f"({len(all_records):,}/{self.max_records:,}) — fetching..."
                     ),
                 )
@@ -106,6 +193,11 @@ class BaseScraper(ABC):
                             continue
                         seen_ids.add(record_id)
                     all_records.append(record)
+
+                completed_queries.append(query)
+                self.save_checkpoint(
+                    all_records, filename_prefix, completed_queries, total_queries
+                )
 
                 if len(all_records) >= self.max_records:
                     console.print(

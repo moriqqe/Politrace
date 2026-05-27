@@ -51,24 +51,44 @@ search_queries:
     - "#Ukraine"
     - "#Gaza"
     - "#StopWar"
-  instagram:
-    - "ukraine"
-    - "gaza"
-    - "russia"
-    - "geopolitics"
-    - "war2024"
-    - "nato"
 
 telegram_channels:
-  pro_kremlin:
-    - durov          # test only, use actual channel usernames
-    - rt_russian
-    - solovievlive
+  russian_state:
+    # Russian state media and pro-Kremlin bloggers
+    - rian_ru           # RIA Novosti — #1 most-cited in Kremlin info ecosystem
+    - solovievlive      # Vladimir Soloviev — 1.3M subscribers
+    - rtnews            # RT English
+    - rt_russian        # RT Russian
+    - rybar             # top independent pro-Russian military blogger
+    - dva_majors        # Два майора — 1M+ military analysis
+    - pul_1             # Пул Первого — Lukashenko / Belarus
+    - warfakes          # Война с фейками — Kremlin pseudo fact-checking
+    - intelslava        # Intel Slava Z — pro-Russian aggregator
+
+  ukrainian:
+    # Ukrainian official and pro-Ukrainian sources
+    - V_Zelenskiy_official   # President Zelensky official — 2M+
+    - ukrainenowenglish      # Ukraine Now — official government English channel
+    - nexta_tv               # NEXTA — largest opposition/Ukrainian diaspora channel
+    - kyivindependent        # Kyiv Independent — English-language journalism
+    - DefenceU               # Ukrainian Ministry of Defence
+
   western:
-    - nexta_tv
-    - ukraineworld
-    - kyivindependent
-  neutral_trackers:
-    - intelrepublic
-    - warmonitor
-    - Middle_East_Spectator
+    # Western wire services and mainstream media
+    - ReutersWorldChannel    # Reuters — neutral wire service
+    - BBCWorld               # BBC — trusted international reporting
+    - nytimes                # New York Times
+    - disclosetv             # Disclose.tv — alternative Western media, right-leaning
+
+  osint_trackers:
+    # Open-source intelligence, no clear political affiliation
+    - osintdefender          # OSINTdefender — verified military/conflict data
+    - war_monitor            # War Monitor — global conflict flashpoints
+    - ClashReport            # Clash Report — raw frontline reports
+    - militarysummary        # Military Summary — daily structured briefings
+    - AMK_Mapping            # AMK Mapping — annotated conflict maps
+
+  middle_east:
+    # Middle Eastern and regional perspectives
+    - aljazeera              # Al Jazeera — Qatari, Arabic-world perspective
+    - middleeastobserver     # Middle East Observer — Arabic-to-English translations

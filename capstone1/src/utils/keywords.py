@@ -19,10 +19,20 @@ def load_keywords(config_path: str = "config/keywords.yaml") -> dict:
 
 
 def get_search_queries(platform: str) -> list[str]:
-    """Return search queries for the given platform (twitter or instagram)."""
+    """Return search queries for the given platform (twitter)."""
     config = load_keywords()
     queries = config.get("search_queries", {}).get(platform, [])
     return list(queries)
+
+
+_VALID_TELEGRAM_CATEGORIES = (
+    "russian_state",
+    "ukrainian",
+    "western",
+    "osint_trackers",
+    "middle_east",
+    "all",
+)
 
 
 def get_telegram_channels(category: str = "all") -> list[str]:
@@ -30,11 +40,28 @@ def get_telegram_channels(category: str = "all") -> list[str]:
     config = load_keywords()
     channels = config.get("telegram_channels", {})
     if category == "all":
+        seen: set[str] = set()
         result: list[str] = []
         for names in channels.values():
-            result.extend(names)
+            for name in names:
+                if name not in seen:
+                    seen.add(name)
+                    result.append(name)
         return result
-    return list(channels.get(category, []))
+    if category not in channels:
+        valid = ", ".join(_VALID_TELEGRAM_CATEGORIES)
+        raise ValueError(f"unknown category {category!r}; valid options: {valid}")
+    return list(channels[category])
+
+
+def get_channel_camp(username: str) -> str:
+    """Return camp name for a channel username, or 'unknown' if not found."""
+    config = load_keywords()
+    channels = config.get("telegram_channels", {})
+    for camp, names in channels.items():
+        if username in names:
+            return camp
+    return "unknown"
 
 
 def build_contains_check(text: str) -> dict[str, list[str]]:
@@ -52,14 +79,16 @@ if __name__ == "__main__":
     leaders = config.get("leaders", [])
     hotspots = config.get("hotspots", [])
     twitter = get_search_queries("twitter")
-    instagram = get_search_queries("instagram")
     all_channels = get_telegram_channels("all")
+    camps = ("russian_state", "ukrainian", "western", "osint_trackers", "middle_east")
 
     print("Keywords config summary")
     print(f"  Leaders: {len(leaders)}")
     print(f"  Hotspots: {len(hotspots)}")
     print(f"  Twitter queries: {len(twitter)}")
-    print(f"  Instagram queries: {len(instagram)}")
+    print("  Telegram channels by camp:")
+    for camp in camps:
+        print(f"    {camp}: {len(get_telegram_channels(camp))}")
     print(f"  Telegram channels (all): {len(all_channels)}")
     print()
     print("Sample contains check:")

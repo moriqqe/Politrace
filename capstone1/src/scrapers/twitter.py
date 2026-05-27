@@ -22,7 +22,7 @@ class TwitterScraper(BaseScraper):
         self,
         apify_token: str,
         output_dir: str = "data/raw",
-        max_records: int = 1500,
+        max_records: int = 15000,
     ) -> None:
         super().__init__(output_dir=output_dir, max_records=max_records)
         self.apify_token = apify_token

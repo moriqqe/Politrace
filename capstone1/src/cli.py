@@ -13,9 +13,8 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 from rich.table import Table
 
-from .cleaning import clean_instagram, clean_telegram, clean_twitter
+from .cleaning import clean_telegram, clean_twitter
 from .scrapers.base import console
-from .scrapers.instagram import InstagramScraper
 from .scrapers.telegram import TelegramScraper
 from .scrapers.twitter import TwitterScraper
 from .utils.config import get_max_records
@@ -29,8 +28,7 @@ app = typer.Typer(
     help="Political Discourse Data Collector — scrape and clean social media data.",
     epilog="""
 Examples:
-  python main.py scrape twitter --defaults --max 1500
-  python main.py scrape instagram --query ukraine --query gaza
+  python main.py scrape twitter --defaults --max 15000
   python main.py scrape telegram --category western
   python main.py scrape all
   python main.py clean all
@@ -49,7 +47,7 @@ def _print_banner() -> None:
         Panel(
             "[bold]Capstone 1[/bold]\n"
             "Political Discourse Data Collector\n"
-            "Twitter/Instagram: 1,500 · Telegram: 10,000 (defaults)",
+            "Twitter: 15,000 · Telegram: 15,000 (defaults)",
             title="Capstone 1",
             border_style="green",
         )
@@ -120,11 +118,16 @@ def scrape_twitter(
         None, "--query", "-q", help="Search queries (can pass multiple)"
     ),
     max_records: Optional[int] = typer.Option(
-        None, "--max", "-m", help="Cap total records (default: 1500 from .env)"
+        None, "--max", "-m", help="Cap total records (default: 15000 from .env)"
     ),
     output_prefix: str = typer.Option("twitter", "--output", "-o"),
     use_defaults: bool = typer.Option(
         True, "--defaults/--no-defaults", help="Use default queries from keywords.yaml"
+    ),
+    resume: bool = typer.Option(
+        False,
+        "--resume",
+        help="Continue from the last checkpoint in data/raw/backups/",
     ),
 ) -> None:
     """Scrape Twitter/X via Apify and save enriched raw CSV."""
@@ -142,7 +145,7 @@ def scrape_twitter(
     console.print(f"Twitter target: {limit:,} records across {len(query_list)} queries", style="green")
     scraper = TwitterScraper(token, max_records=limit)
     raw_path = scraper.scrape_and_save(
-        query_list, output_prefix, limit_key="max_tweets"
+        query_list, output_prefix, limit_key="max_tweets", resume=resume
     )
     if not raw_path:
         console.print("No records collected; skipping enrichment.", style="yellow")
@@ -159,49 +162,21 @@ def scrape_twitter(
     )
 
 
-@scrape_app.command("instagram")
-def scrape_instagram(
-    queries: Optional[List[str]] = typer.Option(
-        None, "--query", "-q", help="Hashtags or profiles (can pass multiple)"
-    ),
-    max_records: Optional[int] = typer.Option(
-        None, "--max", "-m", help="Cap total records (default: 1500 from .env)"
-    ),
-    output_prefix: str = typer.Option("instagram", "--output", "-o"),
-    use_defaults: bool = typer.Option(
-        True, "--defaults/--no-defaults", help="Use default queries from keywords.yaml"
-    ),
-) -> None:
-    """Scrape Instagram via Apify and save enriched raw CSV."""
-    token = os.getenv("APIFY_API_TOKEN")
-    if not token:
-        console.print("APIFY_API_TOKEN not set in .env", style="red")
+@scrape_app.command("telegram-login")
+def telegram_login() -> None:
+    """One-time Telegram authentication (creates telegram_session.session)."""
+    api_id = os.getenv("TELEGRAM_API_ID")
+    api_hash = os.getenv("TELEGRAM_API_HASH")
+    phone = os.getenv("TELEGRAM_PHONE")
+    if not all([api_id, api_hash, phone]):
+        console.print(
+            "TELEGRAM_API_ID, TELEGRAM_API_HASH, and TELEGRAM_PHONE must be set",
+            style="red",
+        )
         raise typer.Exit(1)
 
-    limit = _resolve_max("instagram", max_records)
-    query_list = _merge_queries("instagram", queries, use_defaults)
-    if not query_list:
-        console.print("No queries provided.", style="red")
-        raise typer.Exit(1)
-
-    console.print(f"Instagram target: {limit:,} records across {len(query_list)} queries", style="green")
-    scraper = InstagramScraper(token, max_records=limit)
-    raw_path = scraper.scrape_and_save(
-        query_list, output_prefix, limit_key="max_posts"
-    )
-    if not raw_path:
-        console.print("No records collected; skipping enrichment.", style="yellow")
-        raise typer.Exit(1)
-    records = _load_records_from_csv(raw_path)
-    if not records:
-        console.print("No records collected; skipping enrichment.", style="yellow")
-        raise typer.Exit(1)
-    enriched = enrich_all(records, text_field="caption")
-    out_path = scraper.save(enriched, f"{output_prefix}_raw")
-    console.print(
-        f"Instagram scrape complete: {len(enriched):,} records → {out_path}",
-        style="green",
-    )
+    scraper = TelegramScraper(int(api_id), api_hash, phone)
+    scraper.login()
 
 
 @scrape_app.command("telegram")
@@ -213,9 +188,14 @@ def scrape_telegram(
         help="all | pro_kremlin | western | neutral_trackers",
     ),
     max_records: Optional[int] = typer.Option(
-        None, "--max", "-m", help="Cap total records (default: 10000 from .env)"
+        None, "--max", "-m", help="Cap total records (default: 15000 from .env)"
     ),
     output_prefix: str = typer.Option("telegram", "--output", "-o"),
+    resume: bool = typer.Option(
+        False,
+        "--resume",
+        help="Continue from the last checkpoint in data/raw/backups/",
+    ),
 ) -> None:
     """Scrape Telegram channels via Telethon and save enriched raw CSV."""
     api_id = os.getenv("TELEGRAM_API_ID")
@@ -239,7 +219,9 @@ def scrape_telegram(
         style="green",
     )
     scraper = TelegramScraper(int(api_id), api_hash, phone, max_records=limit)
-    raw_path = scraper.scrape_channels(channel_list, filename_prefix=output_prefix)
+    raw_path = scraper.scrape_channels(
+        channel_list, filename_prefix=output_prefix, resume=resume
+    )
     if not raw_path:
         console.print("No records collected; skipping enrichment.", style="yellow")
         raise typer.Exit(1)
@@ -258,20 +240,17 @@ def scrape_telegram(
 @scrape_app.command("all")
 def scrape_all(
     twitter_max: Optional[int] = typer.Option(None, "--twitter-max", help="Twitter cap"),
-    instagram_max: Optional[int] = typer.Option(None, "--instagram-max", help="Instagram cap"),
     telegram_max: Optional[int] = typer.Option(None, "--telegram-max", help="Telegram cap"),
     max_records: Optional[int] = typer.Option(
         None, "--max", "-m", help="Set same cap for all platforms (overrides per-platform)"
     ),
 ) -> None:
-    """Run Twitter, Instagram, and Telegram scrapers in sequence."""
+    """Run Twitter and Telegram scrapers in sequence."""
     tw = max_records if max_records is not None else _resolve_max("twitter", twitter_max)
-    ig = max_records if max_records is not None else _resolve_max("instagram", instagram_max)
     tg = max_records if max_records is not None else _resolve_max("telegram", telegram_max)
 
     steps = [
         ("Twitter", lambda: scrape_twitter(max_records=tw, use_defaults=True)),
-        ("Instagram", lambda: scrape_instagram(max_records=ig, use_defaults=True)),
         ("Telegram", lambda: scrape_telegram(max_records=tg)),
     ]
 
@@ -311,7 +290,6 @@ def clean_all(
 
     patterns = {
         re.compile(r"^twitter_.*\.csv$"): clean_twitter,
-        re.compile(r"^instagram_.*\.csv$"): clean_instagram,
         re.compile(r"^telegram_.*\.csv$"): clean_telegram,
     }
 
@@ -346,6 +324,6 @@ def clean_all(
     else:
         console.print(
             f"No matching CSV files found in {raw_path} "
-            "(expected twitter_*.csv, instagram_*.csv, telegram_*.csv).",
+            "(expected twitter_*.csv, telegram_*.csv).",
             style="yellow",
         )

@@ -12,6 +12,16 @@ from .base import BaseScraper, console
 from .progress import make_task_progress
 
 
+def normalize_phone(phone: str) -> str:
+    """Ensure international E.164 format (+country...) for Telethon."""
+    cleaned = phone.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    if cleaned.startswith("00"):
+        cleaned = "+" + cleaned[2:]
+    elif not cleaned.startswith("+"):
+        cleaned = "+" + cleaned
+    return cleaned
+
+
 class TelegramScraper(BaseScraper):
     """Scrape public Telegram channels using Telethon."""
 
@@ -21,11 +31,37 @@ class TelegramScraper(BaseScraper):
         api_hash: str,
         phone: str,
         output_dir: str = "data/raw",
-        max_records: int = 10000,
+        max_records: int = 15000,
     ) -> None:
         super().__init__(output_dir=output_dir, max_records=max_records)
-        self.phone = phone
+        self.phone = normalize_phone(phone)
         self.client = TelegramClient("telegram_session", api_id, api_hash)
+
+    async def _start_client(self) -> None:
+        """Connect and authenticate; reuse saved session when possible."""
+        await self.client.connect()
+        if await self.client.is_user_authorized():
+            return
+
+        force_sms = os.getenv("TELEGRAM_FORCE_SMS", "").lower() in ("1", "true", "yes")
+        console.print(
+            f"Telegram login for {self.phone}",
+            style="cyan",
+        )
+        console.print(
+            "Code is sent to the Telegram app (chat «Telegram» / «Login code»), not SMS.",
+            style="yellow",
+        )
+        if force_sms:
+            console.print("TELEGRAM_FORCE_SMS=1 — requesting SMS delivery.", style="yellow")
+        else:
+            console.print(
+                "If no code in the app, set TELEGRAM_FORCE_SMS=1 in .env and retry.",
+                style="dim",
+            )
+
+        await self.client.start(phone=self.phone, force_sms=force_sms)
+        console.print("Telegram session saved (telegram_session.session).", style="green")
 
     async def _fetch_channel_messages(
         self,
@@ -87,7 +123,7 @@ class TelegramScraper(BaseScraper):
 
     async def async_scrape(self, channel_username: str, limit: int | None = None) -> list[dict]:
         """Connect, scrape one channel, disconnect."""
-        await self.client.start(phone=self.phone)
+        await self._start_client()
         try:
             return await self._fetch_channel_messages(
                 channel_username, limit or self.max_records
@@ -95,19 +131,42 @@ class TelegramScraper(BaseScraper):
         finally:
             await self.client.disconnect()
 
-    async def _async_scrape_channels(self, channels: list[str]) -> list[dict]:
+    async def _async_scrape_channels(
+        self,
+        channels: list[str],
+        filename_prefix: str,
+        resume: bool = False,
+    ) -> list[dict]:
         """Scrape all channels in one session; backfill until max_records or exhausted."""
         all_records: list[dict] = []
         seen: set[tuple] = set()
         channel_offset: dict[str, int] = {}
         exhausted: set[str] = set()
 
-        await self.client.start(phone=self.phone)
+        if resume:
+            checkpoint = self.load_checkpoint(filename_prefix)
+            if checkpoint:
+                all_records, _, _, meta = checkpoint
+                for record in all_records:
+                    key = (record.get("message_id"), record.get("channel_username"))
+                    if key[0] is not None:
+                        seen.add(key)
+                channel_offset = {
+                    k: int(v) for k, v in (meta.get("channel_offset") or {}).items()
+                }
+                exhausted = set(meta.get("exhausted") or [])
+                console.print(
+                    f"Resuming Telegram from checkpoint: {len(all_records):,} records",
+                    style="cyan",
+                )
+
+        await self._start_client()
         try:
             with make_task_progress("Telegram channels") as progress:
                 task = progress.add_task(
                     f"Target {self.max_records:,} messages",
                     total=self.max_records,
+                    completed=min(len(all_records), self.max_records),
                 )
                 round_num = 0
                 while len(all_records) < self.max_records and len(exhausted) < len(channels):
@@ -169,6 +228,17 @@ class TelegramScraper(BaseScraper):
                         else:
                             progress.update(task, completed=min(len(all_records), self.max_records))
 
+                        self.save_checkpoint(
+                            all_records[: self.max_records],
+                            filename_prefix,
+                            completed_queries=sorted(exhausted),
+                            total_queries=len(channels),
+                            extra={
+                                "channel_offset": channel_offset,
+                                "exhausted": sorted(exhausted),
+                            },
+                        )
+
                     if round_num >= 20:
                         console.print("Stopped after 20 rounds (safety limit).", style="yellow")
                         break
@@ -186,15 +256,29 @@ class TelegramScraper(BaseScraper):
         self,
         channels: list[str],
         filename_prefix: str = "telegram",
+        resume: bool = False,
     ) -> str:
         """Scrape multiple channels with one Telegram session and event loop."""
-        all_records = asyncio.run(self._async_scrape_channels(channels))
+        all_records = asyncio.run(
+            self._async_scrape_channels(channels, filename_prefix, resume=resume)
+        )
 
         if not all_records:
             console.print("No messages collected.", style="yellow")
             return ""
 
         return self.save(all_records, f"{filename_prefix}_raw")
+
+    async def async_login(self) -> None:
+        """Authenticate once and save session file."""
+        try:
+            await self._start_client()
+        finally:
+            await self.client.disconnect()
+
+    def login(self) -> None:
+        """Sync wrapper for Telegram authentication."""
+        asyncio.run(self.async_login())
 
 
 if __name__ == "__main__":
