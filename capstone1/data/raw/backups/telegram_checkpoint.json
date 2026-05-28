@@ -1,0 +1,20 @@
+{
+  "completed_queries": [
+    "disclosetv",
+    "nytimes"
+  ],
+  "record_count": 15000,
+  "total_queries": 4,
+  "max_records": 15000,
+  "updated_at": "2026-05-27T22:01:00.617290+00:00",
+  "channel_offset": {
+    "ReutersWorldChannel": 145206,
+    "BBCWorld": 77616,
+    "nytimes": 7,
+    "disclosetv": 8237
+  },
+  "exhausted": [
+    "disclosetv",
+    "nytimes"
+  ]
+}

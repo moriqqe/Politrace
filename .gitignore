@@ -14,9 +14,9 @@ capstone1/telegram_session*
 capstone1/*.session
 
 # Collected data
-capstone1/data/raw/*.csv
-capstone1/data/raw/*.json
-capstone1/data/clean/*.csv
+# capstone1/data/raw/*.csv
+# capstone1/data/raw/*.json
+# capstone1/data/clean/*.csv
 
 # IDE / OS
 .idea/

@@ -7,10 +7,10 @@ telegram_session*
 *.session
 
 # Collected data
-data/raw/*.csv
-data/raw/*.json
-data/raw/backups/
-data/clean/*.csv
+# data/raw/*.csv
+# data/raw/*.json
+# data/raw/backups/
+# data/clean/*.csv
 
 # Python
 __pycache__/

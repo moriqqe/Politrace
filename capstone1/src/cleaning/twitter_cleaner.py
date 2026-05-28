@@ -11,6 +11,24 @@ from .base import console, derive_output_path, log_row_counts, print_summary_tab
 NUMERIC_COLS = ["likes", "retweets", "replies", "views", "user_followers"]
 
 
+def _dedupe_tweets(df: pd.DataFrame) -> pd.DataFrame:
+    """Deduplicate by tweet_id when present; avoid collapsing rows with missing ids."""
+    if "tweet_id" not in df.columns:
+        return df.drop_duplicates(subset=["text", "date"], keep="first")
+
+    ids = df["tweet_id"].astype("string")
+    populated = ids.notna() & (ids.str.strip() != "")
+
+    if populated.any():
+        with_id = df[populated].drop_duplicates(subset=["tweet_id"], keep="first")
+        without_id = df[~populated]
+        if len(without_id):
+            without_id = without_id.drop_duplicates(subset=["text", "date"], keep="first")
+        return pd.concat([with_id, without_id], ignore_index=True)
+
+    return df.drop_duplicates(subset=["text", "date"], keep="first")
+
+
 def clean_twitter(input_path: str, output_path: str | None = None) -> str:
     """Clean Twitter scrape CSV and save to data/clean/. Returns output path."""
     in_path = Path(input_path)
@@ -23,8 +41,7 @@ def clean_twitter(input_path: str, output_path: str | None = None) -> str:
 
     df = df.dropna(subset=["text"])
     df = df[df["text"].astype(str).str.strip() != ""]
-    if "tweet_id" in df.columns:
-        df = df.drop_duplicates(subset=["tweet_id"], keep="first")
+    df = _dedupe_tweets(df)
 
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df = df.dropna(subset=["date"])

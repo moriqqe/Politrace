@@ -15,6 +15,70 @@ ACTOR_ID = "danek/twitter-scraper-ppr"
 APIFY_ESTIMATE_SEC = 45
 
 
+def _first(*values):
+    """Return the first non-empty value."""
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        return value
+    return None
+
+
+def _normalize_tweet(item: dict) -> dict:
+    """Map danek/twitter-scraper-ppr (and legacy) fields to our CSV schema."""
+    author = item.get("author") or item.get("user") or {}
+    if not isinstance(author, dict):
+        author = {}
+
+    screen_name = _first(
+        author.get("screen_name"),
+        author.get("userName"),
+        author.get("username"),
+    )
+    tweet_id = _first(item.get("tweet_id"), item.get("id"), item.get("tweetId"))
+    tweet_id = str(tweet_id) if tweet_id is not None else None
+
+    url = _first(item.get("url"), item.get("twitterUrl"))
+    if not url and tweet_id and screen_name:
+        url = f"https://twitter.com/{screen_name}/status/{tweet_id}"
+
+    hashtags = item.get("hashtags") or []
+    if isinstance(hashtags, list):
+        hashtags_str = ", ".join(str(tag) for tag in hashtags)
+    else:
+        hashtags_str = str(hashtags) if hashtags else ""
+
+    return {
+        "tweet_id": tweet_id,
+        "date": _first(item.get("created_at"), item.get("createdAt"), item.get("date")),
+        "text": _first(item.get("text"), item.get("full_text")) or "",
+        "likes": _first(item.get("favorites"), item.get("likeCount"), item.get("favorite_count")) or 0,
+        "retweets": _first(item.get("retweets"), item.get("retweetCount"), item.get("retweet_count")) or 0,
+        "replies": _first(item.get("replies"), item.get("replyCount"), item.get("reply_count")) or 0,
+        "views": _first(item.get("views"), item.get("viewCount")) or 0,
+        "user_name": screen_name,
+        "user_followers": _first(
+            author.get("followers"),
+            author.get("followers_count"),
+            author.get("sub_count"),
+        )
+        or 0,
+        "user_verified": _first(
+            author.get("blue_verified"),
+            author.get("isVerified"),
+            author.get("verified"),
+        )
+        or False,
+        "hashtags": hashtags_str,
+        "is_retweet": item.get("isRetweet", False),
+        "url": url,
+        "platform": "twitter",
+        "collection_date": BaseScraper.timestamp(),
+    }
+
+
 class TwitterScraper(BaseScraper):
     """Scrape Twitter/X posts using an Apify actor."""
 
@@ -58,28 +122,7 @@ class TwitterScraper(BaseScraper):
 
         records: list[dict] = []
         for item in self.client.dataset(dataset_id).iterate_items():
-            author = item.get("author") or item.get("user") or {}
-            if not isinstance(author, dict):
-                author = {}
-            records.append(
-                {
-                    "tweet_id": item.get("id") or item.get("tweetId"),
-                    "date": item.get("createdAt") or item.get("created_at"),
-                    "text": item.get("text") or item.get("full_text") or "",
-                    "likes": item.get("likeCount") or item.get("favorite_count") or 0,
-                    "retweets": item.get("retweetCount") or item.get("retweet_count") or 0,
-                    "replies": item.get("replyCount") or item.get("reply_count") or 0,
-                    "views": item.get("viewCount") or item.get("views") or 0,
-                    "user_name": author.get("userName") or author.get("username"),
-                    "user_followers": author.get("followers") or author.get("followers_count") or 0,
-                    "user_verified": author.get("isVerified") or author.get("verified") or False,
-                    "hashtags": ", ".join(item.get("hashtags") or []),
-                    "is_retweet": item.get("isRetweet", False),
-                    "url": item.get("url") or item.get("twitterUrl"),
-                    "platform": "twitter",
-                    "collection_date": BaseScraper.timestamp(),
-                }
-            )
+            records.append(_normalize_tweet(item))
 
         console.print(f"Collected {len(records)} tweets for {query!r}", style="green")
         return records
