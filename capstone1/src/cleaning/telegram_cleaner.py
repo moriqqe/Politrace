@@ -1,4 +1,4 @@
-"""Telegram raw CSV cleaning."""
+# clean telegram csv
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ NUMERIC_COLS = ["views", "forwards", "replies_count", "reactions_count"]
 
 
 def clean_telegram(input_path: str, output_path: str | None = None) -> str:
-    """Clean Telegram scrape CSV and save to data/clean/. Returns output path."""
     in_path = Path(input_path)
     out_path = Path(output_path) if output_path else derive_output_path(input_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

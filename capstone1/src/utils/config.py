@@ -1,4 +1,4 @@
-"""Collection limits and settings from environment."""
+# record limits from .env
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ _ENV_KEYS = {
 
 
 def get_max_records(platform: str) -> int:
-    """Return per-platform record cap (env override, then built-in defaults)."""
     env_key = _ENV_KEYS.get(platform)
     if env_key and os.getenv(env_key):
         return int(os.getenv(env_key))

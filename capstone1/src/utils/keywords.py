@@ -1,4 +1,4 @@
-"""Load and query geopolitical keyword configuration."""
+# keywords.yaml - leaders, hotspots, channels
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ _DEFAULT_CONFIG = Path(__file__).resolve().parents[2] / "config" / "keywords.yam
 
 
 def load_keywords(config_path: str = "config/keywords.yaml") -> dict:
-    """Load and return the YAML keyword config as a dict."""
     path = Path(config_path)
     if not path.is_absolute():
         path = _DEFAULT_CONFIG.parent.parent / path
@@ -19,7 +18,6 @@ def load_keywords(config_path: str = "config/keywords.yaml") -> dict:
 
 
 def get_search_queries(platform: str) -> list[str]:
-    """Return search queries for the given platform (twitter)."""
     config = load_keywords()
     queries = config.get("search_queries", {}).get(platform, [])
     return list(queries)
@@ -36,7 +34,6 @@ _VALID_TELEGRAM_CATEGORIES = (
 
 
 def get_telegram_channels(category: str = "all") -> list[str]:
-    """Return Telegram channel usernames, optionally filtered by category."""
     config = load_keywords()
     channels = config.get("telegram_channels", {})
     if category == "all":
@@ -55,7 +52,6 @@ def get_telegram_channels(category: str = "all") -> list[str]:
 
 
 def get_channel_camp(username: str) -> str:
-    """Return camp name for a channel username, or 'unknown' if not found."""
     config = load_keywords()
     channels = config.get("telegram_channels", {})
     for camp, names in channels.items():
@@ -65,7 +61,6 @@ def get_channel_camp(username: str) -> str:
 
 
 def build_contains_check(text: str) -> dict[str, list[str]]:
-    """Return matched leaders and hotspots found in text (case-insensitive)."""
     config = load_keywords()
     lowered = text.lower()
     return {

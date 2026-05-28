@@ -1,4 +1,4 @@
-"""Rich progress helpers with elapsed time and ETA."""
+# rich progress bars (eta etc)
 
 from __future__ import annotations
 
@@ -21,7 +21,6 @@ console = Console()
 
 
 def make_task_progress(description: str = "Working") -> Progress:
-    """Progress bar for finite tasks (queries, channels) with ETA."""
     return Progress(
         SpinnerColumn(),
         TextColumn("[bold blue]{task.description}"),
@@ -41,7 +40,7 @@ def run_with_status_wait(
     func: Callable[[], Any],
     estimate_seconds: int | None = None,
 ) -> Any:
-    """Run a blocking remote job with a status spinner (works alongside query progress)."""
+    # spinner while apify runs in a background thread
     result: dict[str, Any] = {}
     error: list[BaseException] = []
 

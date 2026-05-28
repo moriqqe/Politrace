@@ -1,10 +1,4 @@
-"""
-Capstone Project 2 - Data Loader
-Loads telegram_raw_clean.csv and twitter_raw_clean.csv into SQLite.
-
-Usage:
-    python capstone2/scripts/load_data.py
-"""
+# load clean csvs into sqlite (cp2)
 
 import sqlite3
 import csv
@@ -12,7 +6,6 @@ import re
 import shutil
 from pathlib import Path
 
-# Paths
 BASE_DIR    = Path(__file__).resolve().parent.parent.parent
 CP1_CLEAN   = BASE_DIR / "capstone1" / "data" / "clean"
 CP2_DIR     = BASE_DIR / "capstone2"

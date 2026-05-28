@@ -1,4 +1,4 @@
-"""Entry point for the Capstone 1 CLI."""
+# cli entry point
 
 from src.cli import app
 

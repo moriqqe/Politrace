@@ -1,4 +1,4 @@
-"""CLI application for Capstone 1 data collection."""
+# capstone1 cli - scrape / clean
 
 from __future__ import annotations
 
@@ -102,7 +102,6 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """Capstone 1 — Political Discourse Data Collector."""
     if version:
         console.print(f"Capstone 1 v{__version__}")
         raise typer.Exit()
@@ -130,7 +129,6 @@ def scrape_twitter(
         help="Continue from the last checkpoint in data/raw/backups/",
     ),
 ) -> None:
-    """Scrape Twitter/X via Apify and save enriched raw CSV."""
     token = os.getenv("APIFY_API_TOKEN")
     if not token:
         console.print("APIFY_API_TOKEN not set in .env", style="red")
@@ -164,7 +162,6 @@ def scrape_twitter(
 
 @scrape_app.command("telegram-login")
 def telegram_login() -> None:
-    """One-time Telegram authentication (creates telegram_session.session)."""
     api_id = os.getenv("TELEGRAM_API_ID")
     api_hash = os.getenv("TELEGRAM_API_HASH")
     phone = os.getenv("TELEGRAM_PHONE")
@@ -185,7 +182,7 @@ def scrape_telegram(
     category: str = typer.Option(
         "all",
         "--category",
-        help="all | pro_kremlin | western | neutral_trackers",
+        help="all | russian_state | ukrainian | western | osint_trackers | middle_east",
     ),
     max_records: Optional[int] = typer.Option(
         None, "--max", "-m", help="Cap total records (default: 15000 from .env)"
@@ -197,7 +194,6 @@ def scrape_telegram(
         help="Continue from the last checkpoint in data/raw/backups/",
     ),
 ) -> None:
-    """Scrape Telegram channels via Telethon and save enriched raw CSV."""
     api_id = os.getenv("TELEGRAM_API_ID")
     api_hash = os.getenv("TELEGRAM_API_HASH")
     phone = os.getenv("TELEGRAM_PHONE")
@@ -245,7 +241,6 @@ def scrape_all(
         None, "--max", "-m", help="Set same cap for all platforms (overrides per-platform)"
     ),
 ) -> None:
-    """Run Twitter and Telegram scrapers in sequence."""
     tw = max_records if max_records is not None else _resolve_max("twitter", twitter_max)
     tg = max_records if max_records is not None else _resolve_max("telegram", telegram_max)
 
@@ -283,7 +278,6 @@ def clean_all(
     raw_dir: str = typer.Option("data/raw"),
     clean_dir: str = typer.Option("data/clean"),
 ) -> None:
-    """Clean all matching raw CSV files into data/clean/."""
     raw_path = Path(raw_dir)
     clean_path = Path(clean_dir)
     clean_path.mkdir(parents=True, exist_ok=True)

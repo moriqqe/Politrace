@@ -1,4 +1,4 @@
-"""Capstone 1 package — load environment on import."""
+# load .env from capstone1 or repo root
 
 from pathlib import Path
 

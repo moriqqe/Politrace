@@ -1,4 +1,4 @@
-"""Shared helpers for cleaning pipelines."""
+# helpers for clean pipeline
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ console = Console()
 
 
 def derive_output_path(input_path: str) -> Path:
-    """Map data/raw/foo.csv -> data/clean/foo_clean.csv."""
+    # raw/foo.csv -> clean/foo_clean.csv
     path = Path(input_path)
     parts = ["clean" if part == "raw" else part for part in path.parts]
     out = Path(*parts)
@@ -27,7 +27,6 @@ def log_row_counts(before: int, after: int) -> None:
 
 
 def print_summary_table(df: pd.DataFrame, title: str) -> None:
-    """Print column dtypes, null counts, and sample values."""
     table = Table(title=title)
     table.add_column("Column")
     table.add_column("Dtype")

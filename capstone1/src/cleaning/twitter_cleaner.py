@@ -1,4 +1,4 @@
-"""Twitter raw CSV cleaning."""
+# clean twitter csv
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ NUMERIC_COLS = ["likes", "retweets", "replies", "views", "user_followers"]
 
 
 def _dedupe_tweets(df: pd.DataFrame) -> pd.DataFrame:
-    """Deduplicate by tweet_id when present; avoid collapsing rows with missing ids."""
+    # dedupe by tweet_id when present else text+date
     if "tweet_id" not in df.columns:
         return df.drop_duplicates(subset=["text", "date"], keep="first")
 
@@ -30,7 +30,6 @@ def _dedupe_tweets(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_twitter(input_path: str, output_path: str | None = None) -> str:
-    """Clean Twitter scrape CSV and save to data/clean/. Returns output path."""
     in_path = Path(input_path)
     out_path = Path(output_path) if output_path else derive_output_path(input_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

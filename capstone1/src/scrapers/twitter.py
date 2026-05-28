@@ -1,4 +1,4 @@
-"""Twitter/X scraper via Apify."""
+# twitter via apify
 
 from __future__ import annotations
 
@@ -11,12 +11,10 @@ from .base import BaseScraper, console
 from .progress import run_with_status_wait
 
 ACTOR_ID = "danek/twitter-scraper-ppr"
-# Rough Apify runtime hint for progress display (varies by query size)
-APIFY_ESTIMATE_SEC = 45
+APIFY_ESTIMATE_SEC = 45  # rough wait time for the actor
 
 
 def _first(*values):
-    """Return the first non-empty value."""
     for value in values:
         if value is None:
             continue
@@ -27,7 +25,7 @@ def _first(*values):
 
 
 def _normalize_tweet(item: dict) -> dict:
-    """Map danek/twitter-scraper-ppr (and legacy) fields to our CSV schema."""
+    # map actor fields to our csv schema
     author = item.get("author") or item.get("user") or {}
     if not isinstance(author, dict):
         author = {}
@@ -80,8 +78,6 @@ def _normalize_tweet(item: dict) -> dict:
 
 
 class TwitterScraper(BaseScraper):
-    """Scrape Twitter/X posts using an Apify actor."""
-
     def __init__(
         self,
         apify_token: str,
@@ -93,7 +89,6 @@ class TwitterScraper(BaseScraper):
         self.client = ApifyClient(apify_token)
 
     def scrape(self, query: str, max_tweets: int | None = None, **kwargs) -> list[dict]:
-        """Run Apify actor for one search query and return normalized tweets."""
         limit = max_tweets or self.max_records
         run_input = {
             "query": query,
@@ -128,7 +123,6 @@ class TwitterScraper(BaseScraper):
         return records
 
     def enrich_with_keywords(self, records: list[dict]) -> list[dict]:
-        """Add mentioned_leaders and mentioned_hotspots from keyword matching."""
         for record in records:
             text = record.get("text") or ""
             matches = build_contains_check(text)

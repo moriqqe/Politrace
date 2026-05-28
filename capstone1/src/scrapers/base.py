@@ -1,4 +1,4 @@
-"""Abstract base class for platform scrapers."""
+# base scraper - save, checkpoint, dedupe
 
 from __future__ import annotations
 
@@ -16,8 +16,6 @@ console = Console()
 
 
 class BaseScraper(ABC):
-    """Base scraper with shared persistence and orchestration."""
-
     def __init__(self, output_dir: str = "data/raw", max_records: int = 10000) -> None:
         self.output_dir = Path(output_dir)
         self.max_records = max_records
@@ -39,7 +37,7 @@ class BaseScraper(ABC):
         total_queries: int,
         extra: dict | None = None,
     ) -> None:
-        """Persist progress after each query so a crash does not lose paid Apify results."""
+        # checkpoint so apify run isnt lost if it crashes mid-query
         csv_path = self._checkpoint_csv_path(filename_prefix)
         pd.DataFrame(records).to_csv(csv_path, index=False)
 
@@ -64,7 +62,6 @@ class BaseScraper(ABC):
     def load_checkpoint(
         self, filename_prefix: str
     ) -> tuple[list[dict], list[str], set[str | int], dict] | None:
-        """Load checkpoint CSV and metadata. Returns None if no checkpoint exists."""
         csv_path = self._checkpoint_csv_path(filename_prefix)
         meta_path = self._checkpoint_meta_path(filename_prefix)
         if not csv_path.exists() or not meta_path.exists():
@@ -90,11 +87,9 @@ class BaseScraper(ABC):
 
     @abstractmethod
     def scrape(self, query: str, **kwargs) -> list[dict]:
-        """Fetch records for a single query. Implemented by subclasses."""
         ...
 
     def save(self, records: list[dict], filename: str, format: str = "csv") -> str:
-        """Save records to {output_dir}/{filename}.{format}. Returns full output path."""
         if format not in ("csv", "json"):
             console.print(f"Unsupported format: {format}", style="yellow")
             raise ValueError(f"Unsupported format: {format}")
@@ -126,7 +121,6 @@ class BaseScraper(ABC):
         resume: bool = False,
         **kwargs,
     ) -> str:
-        """Scrape all queries, dedupe by id, save aggregated results. Returns output path."""
         all_records: list[dict] = []
         seen_ids: set[str | int] = set()
         completed_queries: list[str] = []
@@ -218,5 +212,4 @@ class BaseScraper(ABC):
 
     @staticmethod
     def timestamp() -> str:
-        """Return current UTC time as an ISO 8601 string."""
         return datetime.now(timezone.utc).isoformat()

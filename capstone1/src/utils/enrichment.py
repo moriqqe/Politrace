@@ -1,4 +1,4 @@
-"""Record enrichment: sentiment, word count, and keyword matching."""
+# vader + word_count + keywods per record
 
 from __future__ import annotations
 
@@ -29,7 +29,6 @@ def _label_from_compound(compound: float) -> str:
 
 
 def add_sentiment(records: list[dict], text_field: str = "text") -> list[dict]:
-    """Add sentiment_score and sentiment_label using VADER."""
     for record in records:
         text = _get_text(record, text_field)
         if text is None:
@@ -46,7 +45,6 @@ def add_sentiment(records: list[dict], text_field: str = "text") -> list[dict]:
 
 
 def add_word_count(records: list[dict], text_field: str = "text") -> list[dict]:
-    """Add word_count from whitespace-split text."""
     for record in records:
         text = _get_text(record, text_field)
         record["word_count"] = len(text.split()) if text is not None else 0
@@ -55,7 +53,6 @@ def add_word_count(records: list[dict], text_field: str = "text") -> list[dict]:
 
 
 def add_keywords(records: list[dict], text_field: str = "text") -> list[dict]:
-    """Add mentioned_leaders and mentioned_hotspots from keyword config."""
     for record in records:
         text = _get_text(record, text_field)
         if text is None:
@@ -71,7 +68,6 @@ def add_keywords(records: list[dict], text_field: str = "text") -> list[dict]:
 
 
 def enrich_all(records: list[dict], text_field: str = "text") -> list[dict]:
-    """Apply sentiment, word count, and keyword enrichment; print summary."""
     enriched = add_sentiment(records, text_field=text_field)
     enriched = add_word_count(enriched, text_field=text_field)
     enriched = add_keywords(enriched, text_field=text_field)

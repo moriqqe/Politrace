@@ -1,4 +1,4 @@
-"""Telegram channel scraper via Telethon."""
+# telegram telethon
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .progress import make_task_progress
 
 
 def normalize_phone(phone: str) -> str:
-    """Ensure international E.164 format (+country...) for Telethon."""
+    # phone to +country e164 format
     cleaned = phone.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     if cleaned.startswith("00"):
         cleaned = "+" + cleaned[2:]
@@ -23,8 +23,6 @@ def normalize_phone(phone: str) -> str:
 
 
 class TelegramScraper(BaseScraper):
-    """Scrape public Telegram channels using Telethon."""
-
     def __init__(
         self,
         api_id: int,
@@ -38,7 +36,6 @@ class TelegramScraper(BaseScraper):
         self.client = TelegramClient("telegram_session", api_id, api_hash)
 
     async def _start_client(self) -> None:
-        """Connect and authenticate; reuse saved session when possible."""
         await self.client.connect()
         if await self.client.is_user_authorized():
             return
@@ -69,7 +66,6 @@ class TelegramScraper(BaseScraper):
         limit: int,
         offset_id: int | None = None,
     ) -> list[dict]:
-        """Fetch messages from one channel (client must already be connected)."""
         entity = await self.client.get_entity(channel_username)
         full_channel = await self.client(GetFullChannelRequest(channel=entity))
         subscribers = full_channel.full_chat.participants_count
@@ -80,7 +76,7 @@ class TelegramScraper(BaseScraper):
             iter_kwargs["offset_id"] = offset_id
 
         scanned = 0
-        max_scan = limit * 15
+        max_scan = limit * 15  # cap scans when channel has mostly media/no text
         async for message in self.client.iter_messages(entity, **iter_kwargs):
             scanned += 1
             if scanned > max_scan:
@@ -122,7 +118,6 @@ class TelegramScraper(BaseScraper):
         return records
 
     async def async_scrape(self, channel_username: str, limit: int | None = None) -> list[dict]:
-        """Connect, scrape one channel, disconnect."""
         await self._start_client()
         try:
             return await self._fetch_channel_messages(
@@ -137,7 +132,6 @@ class TelegramScraper(BaseScraper):
         filename_prefix: str,
         resume: bool = False,
     ) -> list[dict]:
-        """Scrape all channels in one session; backfill until max_records or exhausted."""
         all_records: list[dict] = []
         seen: set[tuple] = set()
         channel_offset: dict[str, int] = {}
@@ -248,7 +242,6 @@ class TelegramScraper(BaseScraper):
         return all_records[: self.max_records]
 
     def scrape(self, query: str, **kwargs) -> list[dict]:
-        """Sync wrapper for a single channel."""
         limit = kwargs.get("limit")
         return asyncio.run(self.async_scrape(query, limit=limit))
 
@@ -258,7 +251,6 @@ class TelegramScraper(BaseScraper):
         filename_prefix: str = "telegram",
         resume: bool = False,
     ) -> str:
-        """Scrape multiple channels with one Telegram session and event loop."""
         all_records = asyncio.run(
             self._async_scrape_channels(channels, filename_prefix, resume=resume)
         )
@@ -270,14 +262,12 @@ class TelegramScraper(BaseScraper):
         return self.save(all_records, f"{filename_prefix}_raw")
 
     async def async_login(self) -> None:
-        """Authenticate once and save session file."""
         try:
             await self._start_client()
         finally:
             await self.client.disconnect()
 
     def login(self) -> None:
-        """Sync wrapper for Telegram authentication."""
         asyncio.run(self.async_login())
 
 

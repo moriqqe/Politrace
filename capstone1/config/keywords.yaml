@@ -54,41 +54,36 @@ search_queries:
 
 telegram_channels:
   russian_state:
-    # Russian state media and pro-Kremlin bloggers
-    - rian_ru           # RIA Novosti — #1 most-cited in Kremlin info ecosystem
-    - solovievlive      # Vladimir Soloviev — 1.3M subscribers
-    - rtnews            # RT English
-    - rt_russian        # RT Russian
-    - rybar             # top independent pro-Russian military blogger
-    - dva_majors        # Два майора — 1M+ military analysis
-    - pul_1             # Пул Первого — Lukashenko / Belarus
-    - warfakes          # Война с фейками — Kremlin pseudo fact-checking
-    - intelslava        # Intel Slava Z — pro-Russian aggregator
+    - rian_ru
+    - solovievlive
+    - rtnews
+    - rt_russian
+    - rybar
+    - dva_majors
+    - pul_1
+    - warfakes
+    - intelslava
 
   ukrainian:
-    # Ukrainian official and pro-Ukrainian sources
-    - V_Zelenskiy_official   # President Zelensky official — 2M+
-    - ukrainenowenglish      # Ukraine Now — official government English channel
-    - nexta_tv               # NEXTA — largest opposition/Ukrainian diaspora channel
-    - kyivindependent        # Kyiv Independent — English-language journalism
-    - DefenceU               # Ukrainian Ministry of Defence
+    - V_Zelenskiy_official
+    - ukrainenowenglish
+    - nexta_tv
+    - kyivindependent
+    - DefenceU
 
   western:
-    # Western wire services and mainstream media
-    - ReutersWorldChannel    # Reuters — neutral wire service
-    - BBCWorld               # BBC — trusted international reporting
-    - nytimes                # New York Times
-    - disclosetv             # Disclose.tv — alternative Western media, right-leaning
+    - ReutersWorldChannel
+    - BBCWorld
+    - nytimes
+    - disclosetv
 
   osint_trackers:
-    # Open-source intelligence, no clear political affiliation
-    - osintdefender          # OSINTdefender — verified military/conflict data
-    - war_monitor            # War Monitor — global conflict flashpoints
-    - ClashReport            # Clash Report — raw frontline reports
-    - militarysummary        # Military Summary — daily structured briefings
-    - AMK_Mapping            # AMK Mapping — annotated conflict maps
+    - osintdefender
+    - war_monitor
+    - ClashReport
+    - militarysummary
+    - AMK_Mapping
 
   middle_east:
-    # Middle Eastern and regional perspectives
-    - aljazeera              # Al Jazeera — Qatari, Arabic-world perspective
-    - middleeastobserver     # Middle East Observer — Arabic-to-English translations
+    - aljazeera
+    - middleeastobserver
