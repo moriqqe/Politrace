@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytical · Politrace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand"><span class="dot"></span> Politrace</div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/analytical" class="active">Analytical</a>
+      <a href="/strategic">Strategic</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <span class="nav-tag">Analytical dashboard</span>
+  </nav>
+
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <h1>Sentiment &amp; Discourse Analytics <span class="type-pill pill-analytical">Analytical</span></h1>
+        <p>Why is the geopolitics conversation so negative, and where does it come from?
+           Drill through time, platform, channel and engagement to find out.</p>
+      </div>
+    </div>
+
+    <!-- Global filter bar -->
+    <div class="filters">
+      <div class="field">
+        <label>Platform</label>
+        <select id="f-platform"><option value="all">All platforms</option>
+          <option value="telegram">Telegram</option><option value="twitter">Twitter / X</option></select>
+      </div>
+      <div class="field">
+        <label>Sentiment</label>
+        <select id="f-sentiment"><option value="all">All</option>
+          <option value="positive">Positive</option><option value="neutral">Neutral</option>
+          <option value="negative">Negative</option></select>
+      </div>
+      <div class="field"><label>From</label><input type="date" id="f-start"></div>
+      <div class="field"><label>To</label><input type="date" id="f-end"></div>
+      <div class="field grow"><label>Search text</label>
+        <input type="text" id="f-search" placeholder="e.g. ceasefire, sanctions, NATO…"></div>
+      <button class="btn btn-primary" id="f-apply">Apply</button>
+      <button class="btn btn-ghost" id="f-reset">Reset</button>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpis" id="kpis"></div>
+
+    <!-- Row 1 -->
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="panel span-2">
+        <div class="panel-head">
+          <div><h3>Post volume &amp; average sentiment over time</h3>
+            <p class="hint">Daily posts (bars) with the mean VADER score (line).</p></div>
+        </div>
+        <div class="chart-box tall"><canvas id="c-timeseries"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Sentiment mix</h3>
+        <p class="hint">Share of positive / neutral / negative posts.</p>
+        <div class="chart-box tall"><canvas id="c-sentiment"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="panel">
+        <h3>Platform comparison</h3>
+        <p class="hint">Sentiment breakdown per platform (stacked).</p>
+        <div class="chart-box"><canvas id="c-platform"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Top channels by volume</h3>
+        <p class="hint">Which sources publish the most.</p>
+        <div class="chart-box"><canvas id="c-channels"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Post length distribution</h3>
+        <p class="hint">Histogram of word counts.</p>
+        <div class="chart-box"><canvas id="c-wordcount"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="grid cols-2" style="margin-bottom:16px">
+      <div class="panel">
+        <h3>Reach vs engagement</h3>
+        <p class="hint">Views × interactions for the top-reach posts, colored by sentiment.</p>
+        <div class="chart-box tall"><canvas id="c-engagement"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3>Most-viewed posts</h3>
+          <p class="hint">Live table — responds to every filter above.</p></div></div>
+        <div class="tbl-scroll">
+          <table id="t-posts"><thead><tr>
+            <th>Date</th><th>Platform</th><th>Author</th><th>Sent.</th><th>Views</th><th>Post</th>
+          </tr></thead><tbody><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/analytical.js') }}"></script>
+</body>
+</html>

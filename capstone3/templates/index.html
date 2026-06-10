@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Politrace — Discourse Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand"><span class="dot"></span> Politrace <small>· discourse intelligence</small></div>
+    <div class="nav-links">
+      <a href="/" class="active">Home</a>
+      <a href="/analytical">Analytical</a>
+      <a href="/strategic">Strategic</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <span class="nav-tag">Capstone 3 · Telegram + Twitter</span>
+  </nav>
+
+  <div class="wrap">
+    <div class="hero">
+      <h1>Tracking the geopolitics conversation</h1>
+      <p>Two interactive dashboards over ~20,300 political posts collected from Telegram and Twitter/X
+         (Jan–May 2026). Explore how sentiment moves and how leaders & hotspots are connected in the discourse.</p>
+    </div>
+
+    <div class="cards">
+      <a href="/analytical" class="dash-card">
+        <div class="ic">📈</div>
+        <h2>Analytical Dashboard <span class="type-pill pill-analytical">Analytical</span></h2>
+        <p>Deep-dive into sentiment trends, platform comparison, channel performance and engagement.
+           Six linked charts with drill-down filters and full-text search.</p>
+        <span class="go">Open analytical view →</span>
+      </a>
+      <a href="/strategic" class="dash-card cyan">
+        <div class="ic">🕸️</div>
+        <h2>Strategic Dashboard <span class="type-pill pill-strategic">Strategic</span></h2>
+        <p>An Obsidian-style force-directed network of every leader and hotspot, wired by how often
+           they are mentioned together. Big-picture view of who drives the agenda.</p>
+        <span class="go">Open network view →</span>
+      </a>
+    </div>
+
+    <p class="footnote">Flask · SQLAlchemy · SQLite · Chart.js · D3.js — data from Capstone 1 & 2.</p>
+  </div>
+</body>
+</html>

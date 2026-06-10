@@ -1,0 +1,20 @@
+Politrace - Capstone 3 (Dashboard Development)
+GitHub repository:
+
+https://github.com/moriqqe/Politrace
+
+The Capstone 3 code is in the /capstone3 folder:
+  - app.py                  Flask app (pages + JSON API)
+  - backend/db.py           database connection (sqlite3)
+  - backend/queries.py      all SQL queries
+  - sql/queries.sql         the same queries, commented
+  - templates/              the two dashboards + landing page
+  - static/                 css, js, vendored Chart.js + D3
+  - data/politrace.db       SQLite database from Capstone 2
+  - screenshots/            screenshots of both dashboards
+
+Run:
+  cd capstone3
+  pip install -r requirements.txt
+  python app.py
+  open http://127.0.0.1:5000
